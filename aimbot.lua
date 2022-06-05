@@ -10,7 +10,7 @@ local silent_shooting = false
 local fov = 100											-- 1-180. 135 recommended for whole screen as the fov is a cone from your camera and this is the cone width
 local max_distance = 1500								-- max distance, 0 for weapon range if possible or it's gona be 7000m
 
-local fire_delay = 0.06									-- Adds fire delay on top of weapons fire delay
+local fire_delay = 0.07									-- Adds fire delay on top of weapons fire delay
 local custom_damage_by_unit = false						-- Set to true to use defined damage by unit in table bellow or false, this has priority 1.
 local custom_damage = false								-- Custom damage in number format or false. Prioritizing custom_damage_by_unit first.
 
@@ -88,9 +88,11 @@ if not loaded then
 
 	local function key_pressed()
 		local controller = c.player_unit and c.player_unit:base() and c.player_unit:base():controller()
+		local active_menu = managers.menu._open_menus[#managers.menu._open_menus]
 
 		if not state_blacklist[managers.player._current_state]
-		or managers.hud and managers.hud._chat_focus == true 
+		or managers.hud and managers.hud._chat_focus == true
+		or active_menu and active_menu.name == "menu_pause"
 		or managers.network.account and managers.network.account._overlay_opened
 		or #shoot_when_keybind_is_pressed > 0 and (not Input:keyboard():down(Idstring(shoot_when_keybind_is_pressed):id()) or not Input:mouse():down(Idstring(shoot_when_keybind_is_pressed)))
 		or controller and mvector3.length(controller:get_input_axis("move")) > PlayerStandard.MOVEMENT_DEADZONE and not shoot_when_moving then
@@ -117,7 +119,8 @@ if not loaded then
 	local function is_hostage(unit)
 		local brain = alive(unit) and unit.brain and unit:brain()
 		local char_dmg = brain and unit:character_damage()
-		if blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or not brain:is_hostile() then
+		local anim = unit:anim_data() -- for hostage trade
+		if blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
 			return true
 		end
 	end
@@ -190,13 +193,18 @@ if not loaded then
 		local wep_base = equipped_unit and equipped_unit:base()
 		c.player_unit = managers.player:player_unit()
 
-		if not equipped_unit or wep_base:get_ammo_total() <= 0 or key_pressed() then 
+		if not equipped_unit or wep_base:get_ammo_total() <= 0 then 
 			return
 		end
 
 		local tweak = wep_base:weapon_tweak_data()
 		local special_wep = table.contains_any(tweak.categories, special_weapons)
 		c.unit = get_target(c.player_unit, wep_base, tweak, special_wep) or {}
+
+		if key_pressed() then
+			return
+		end
+		
 		c.unit_base = c.unit.target and c.unit.target.base and c.unit.target:base() or {}
 		local rng_delay, min_delay, max_delay = get_fire_delay(wep_base)
 		c.fire_delay_interval = c.fire_delay_interval or t + min_delay
