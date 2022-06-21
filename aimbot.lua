@@ -57,7 +57,7 @@ local blocked_units = {									-- Set to true to block shooting those units
 ---------------------------------------------------------------------------------------------------------
 local mod_name = "Mayzones_Aimbot"
 local loaded = rawget(_G, mod_name)
-local c = not loaded and rawset(_G, mod_name, {}) and _G[mod_name] or loaded
+local c = loaded or rawset(_G, mod_name, {}) and _G[mod_name]
 
 c.active = not c.active
 managers.mission._fading_debug_output:script().log(string.format("%s", (c.active and "Aimbot - Activated" or "Aimbot - Deactivated")), (c.active and Color.green or Color.red))
@@ -120,7 +120,7 @@ if not loaded then
 		local brain = alive(unit) and unit.brain and unit:brain()
 		local char_dmg = brain and unit:character_damage()
 		local anim = unit:anim_data() -- for hostage trade
-		if blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
+		if blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or brain.is_hostile and not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
 			return true
 		end
 	end
