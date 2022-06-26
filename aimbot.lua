@@ -20,9 +20,9 @@ local shoot_enemies = true								-- Set to true to shoot enemies.
 
 local shoot_when_moving = true							-- set to true to auto shoot when moving. 
 local shoot_when_aiming = false							-- set to true to auto shoot when aiming down sight.
-local shoot_when_running = false						-- set to true to auto shoot when running.
+local shoot_when_running = true						-- set to true to auto shoot when running.
 local shoot_when_crouching = true						-- set to true to auto shoot when crouching.
-local shoot_when_keybind_is_pressed = ""				-- set "left shift", "right shift", "left ctrl", "right ctrl", "left alt" and "t", "g", "mouse 4", "wheel up" e.g to auto shoot.
+local shoot_when_keybind_is_pressed = ""				-- set "left shift", "right shift", "left ctrl", "right ctrl", "left alt", "t", "g", "4" for mouse 4/number 4 and "mouse wheel up" e.g to auto shoot.
 local state_blacklist = {								-- Set to true to shoot in those states
 	["standard"] 							= true,		-- masked
 	["bleed_out"] 							= true,		-- on ground and able to shoot
@@ -57,7 +57,7 @@ local blocked_units = {									-- Set to true to block shooting those units
 ---------------------------------------------------------------------------------------------------------
 local mod_name = "Mayzones_Aimbot"
 local loaded = rawget(_G, mod_name)
-local c = loaded or rawset(_G, mod_name, {}) and _G[mod_name]
+local c = not loaded and rawset(_G, mod_name, {}) and _G[mod_name] or loaded
 
 c.active = not c.active
 managers.mission._fading_debug_output:script().log(string.format("%s", (c.active and "Aimbot - Activated" or "Aimbot - Deactivated")), (c.active and Color.green or Color.red))
@@ -87,14 +87,14 @@ if not loaded then
 	end
 
 	local function key_pressed()
-		local controller = c.player_unit and c.player_unit:base() and c.player_unit:base():controller()
+		local controller = c.player_unit and c.player_unit:base() and c.player_unit:base():controller() or {}
 		local active_menu = managers.menu._open_menus[#managers.menu._open_menus]
 
 		if not state_blacklist[managers.player._current_state]
 		or managers.hud and managers.hud._chat_focus == true
 		or active_menu and active_menu.name == "menu_pause"
 		or managers.network.account and managers.network.account._overlay_opened
-		or #shoot_when_keybind_is_pressed > 0 and (not Input:keyboard():down(Idstring(shoot_when_keybind_is_pressed):id()) or not Input:mouse():down(Idstring(shoot_when_keybind_is_pressed)))
+		or #shoot_when_keybind_is_pressed > 0 and not (Input:keyboard():down(Idstring(shoot_when_keybind_is_pressed)) or Input:mouse():down(Idstring(shoot_when_keybind_is_pressed)))
 		or controller and mvector3.length(controller:get_input_axis("move")) > PlayerStandard.MOVEMENT_DEADZONE and not shoot_when_moving then
 			return true
 		end
@@ -120,7 +120,7 @@ if not loaded then
 		local brain = alive(unit) and unit.brain and unit:brain()
 		local char_dmg = brain and unit:character_damage()
 		local anim = unit:anim_data() -- for hostage trade
-		if blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or brain.is_hostile and not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
+		if blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
 			return true
 		end
 	end
