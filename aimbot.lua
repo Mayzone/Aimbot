@@ -4,14 +4,14 @@ local c = loaded or rawset(_G, mod_name, {
 	draw_targets = true,									-- Outlines targets with arrow and box
 	freeze_accuracy = false,								-- When aimbot is active, freezes the accuracy until, aimbot is off.
 	target_priority = 1,									-- Set to 1 to target closest, 2 for furthest and 3 for random
-	always_headshot = true,									-- Or a random bodypart
+	always_headshot = true,									-- Or a random bodypart. If bow or flamethrower is used, it will be the hips unless aim_head_when_keybind_is_pressed is used
 	auto_replenish_ammo = false,							-- Replenish ammo when emety by cheating ammo, requires auto_reload true.
 	auto_reload = true,										-- Set to true to reload weapon when emety.
 	shoot_through_wall = false,								-- Set to true if you want to target enemies through walls
 	shoot_through_shield = true,							-- Set to true to shoot through shields when using special ammo or not shoot shields.
 	silent_shooting = false,
 	fov = 100,												-- 1-180. 135 recommended for whole screen as the fov is a cone from your camera and this is the cone width
-	max_distance = 1500,									-- max distance, 0 for weapon range if possible or it's gona be 7000m
+	max_distance = 0,										-- max distance, 0 for weapon range if possible or it's gona be 7000m
 
 	fire_delay = 0.07,										-- Adds fire delay on top of weapons fire delay
 	fire_delay_for_bows = false,								-- Set to false ot ignore fire_delay value
@@ -167,7 +167,7 @@ if not loaded then
 		end
 
 		for _, unit in pairs(World:find_units("camera_cone", camera:camera_object(), Vector3(0, 0), (self.fov / 180 * 2), (self.max_distance > 0 and self.max_distance or special_wep and tweak.flame_max_range or tweak.damage_near or 7000), self:get_mask())) do
-			local body = unit:get_object(Idstring((self.always_headshot or self:aim_at_head()) and "Head" or body_map[math.random(1, #body_map)])) or unit:get_object(Idstring("a_detect"))
+			local body = unit:get_object(Idstring((self.always_headshot or self:aim_at_head()) and "Head" or special_wep and "Hips" or body_map[math.random(1, #body_map)])) or unit:get_object(Idstring("a_detect"))
 			local head_pos = body and body:position() or Vector3()
 			local direction = Vector3()
 			local behind_wall = not self.shoot_through_wall and unit:raycast("ray", head_pos, camera_position, "slot_mask", weap_base._bullet_slotmask, "thickness", 1, "thickness_mask", managers.slot:get_mask("world_geometry", "vehicles"))
@@ -226,6 +226,14 @@ if not loaded then
 			return
 		end
 		
+		if special_wep and c.always_headshot then
+			c.always_headshot = false
+		end
+
+		if not c.fire_delay_for_bows then
+			c.fire_delay = 0
+		end
+
 		c.unit_base = c.unit.target and c.unit.target.base and c.unit.target:base() or {}
 		local rng_delay, min_delay, max_delay = c:get_fire_delay(weap_base)
 		c.fire_delay_interval = c.fire_delay_interval or t + min_delay
@@ -240,24 +248,11 @@ if not loaded then
 				if is_ready then
 					if (special_wep or c.silent_shooting) then
 						local charging_weapon, cam_pos, dmg = weap_base:fire_on_release() and weap_base:charging(), c.player_unit:camera():position(), c:hit_damage(c.unit_base, weap_base._current_stats.damage or 0)
-
+						
 						weap_base:trigger_held(cam_pos, c.unit.dir, dmg, nil, 0, 0, 0)
 
-						--[[ For bow charge
-						if not state.charging_weapon and charging_weapon then
-							state:_start_action_charging_weapon(t)
-						elseif state.charging_weapon and not charging_weapon then
-							state:_end_action_charging_weapon(t)
-						end--]]
-
-						if charging_weapon and not weap_base._cancelled then
-							if not c.fire_delay_for_bows then
-								c.fire_delay = 0
-							end
-
-							if weap_base:charge_multiplier() >= (state._unit:anim_length(Idstring("charge")) or weap_base:charge_max_t() / 1.5) then
-								weap_base:trigger_released(cam_pos, c.unit.dir, dmg, nil, 0, 0, 0)
-							end
+						if charging_weapon and c.fire_delay_interval <= t + math.max(weap_base:charge_max_t(), weap_base:reload_speed_multiplier()) then
+							weap_base:trigger_released(cam_pos, c.unit.dir, dmg, nil, 0, 0, 0)
 						end
 
 						managers.hud:set_ammo_amount(weap_base:selection_index(), weap_base:ammo_info())
@@ -293,6 +288,19 @@ if not loaded then
 		if not c.active then c.session_accuracy = acc end
 		return c.freeze_accuracy and c.active and c.session_accuracy or acc
 	end
+
+	c.orig_projectile_speed = {}
+	for _, projectile in pairs(tweak_data.blackmarket:get_projectiles_index() or {}) do
+		if type(projectile) == "string" and type(tweak_data.projectiles[projectile]) == "table" and projectile:lower():match("arrow") then
+			c.orig_projectile_speed[projectile] = c.orig_projectile_speed[projectile] or {}
+			c.orig_projectile_speed[projectile]["launch_speed"] = tweak_data.projectiles[projectile].launch_speed
+			tweak_data.projectiles[projectile].no_cheat_count = true
+			tweak_data.projectiles[projectile].launch_speed = (tweak_data.projectiles[projectile].launch_speed or 2000) * 1.6
+		end
+	end
 else
+	for projectile in pairs(c.orig_projectile_speed) do
+		tweak_data.projectiles[projectile]["launch_speed"] = c.orig_projectile_speed[projectile].launch_speed
+	end
 	rawset(_G, mod_name, nil)
 end
