@@ -11,7 +11,7 @@ local c = loaded or rawset(_G, mod_name, {
 	shoot_through_shield = true,							-- Set to true to shoot through shields when using special ammo or not shoot shields.
 	silent_shooting = false,
 	fov = 100,												-- 1-180. 135 recommended for whole screen as the fov is a cone from your camera and this is the cone width
-	max_distance = 0,										-- max distance, 0 for weapon range if possible or it's gona be 7000m
+	max_distance = 1500,										-- max distance, 0 for weapon range if possible or it's gona be 7000m
 
 	fire_delay = 0.07,										-- Adds fire delay on top of weapons fire delay
 	fire_delay_for_bows = false,								-- Set to false ot ignore fire_delay value
@@ -141,7 +141,7 @@ if not loaded then
 		local brain = alive(unit) and unit.brain and unit:brain()
 		local char_dmg = brain and unit:character_damage()
 		local anim = unit:anim_data() -- for hostage trade
-		if self.blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
+		if self.blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or brain.is_hostile and not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
 			return true
 		end
 	end
