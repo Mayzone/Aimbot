@@ -21,6 +21,7 @@ local c = loaded or rawset(_G, mod_name, {
 	shoot_civilians = false,								-- Set to true to shoot civilians.
 	shoot_turrets = true,									-- Set to true to shoot turrets, shoot_through_wall is requires.
 	shoot_enemies = true,									-- Set to true to shoot enemies.
+	shoot_players = false,									-- Set to true to shoot players.
 
 	shoot_when_moving = true,								-- set to true to auto shoot when moving. 
 	shoot_when_aiming = false,								-- set to true to auto shoot when aiming down sight.
@@ -67,7 +68,7 @@ managers.mission._fading_debug_output:script().log(string.format("%s", (c.active
 
 if not loaded then
 	math.randomseed(os.time())
-	local player_sentries = {["@IDc71d763cd8d33588@"] = true, ["@IDb1f544e379409e6c@"] = true}
+	local player_sentries = {["@IDc71d763cd8d33588@"] = true, ["@IDb1f544e379409e6c@"] = true, ["@ID2cf4f276ce7ba6f5@"] = true, ["@ID07bd083cc5f2d3ba@"] = true}
 	local special_weapons = {"flamethrower","bow"}
 	local body_map = {
 		"Hips","Spine","Spine1","Spine2","Neck","Head",
@@ -138,10 +139,18 @@ if not loaded then
 	end
 
 	function c:is_hostage(unit)
+		for peer_id, peer in pairs(self.shoot_players and managers.network:session():peers() or {}) do
+			local peer_unit = peer:unit()
+			if alive(peer_unit) and peer_unit:key() == unit:key() then
+				local peer_state = peer_unit:movement()._state
+				return peer_state and not self.state_blacklist[peer_state]
+			end
+		end
+
 		local brain = alive(unit) and unit.brain and unit:brain()
 		local char_dmg = brain and unit:character_damage()
-		local anim = unit:anim_data() -- for hostage trade
-		if self.blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain.is_hostage and brain:is_hostage() or brain.is_hostile and not brain:is_hostile() or anim and (anim.hands_tied or anim.tied) then
+		local anim = unit.anim_data and unit:anim_data() or {} -- for hostage trade
+		if self.blocked_units[unit:base()._tweak_table] or player_sentries[unit:name():t()] or char_dmg and (char_dmg._dead or char_dmg._invulnerable or char_dmg._immortal or char_dmg._god_mode) or brain and (brain.is_hostage and brain:is_hostage() or brain.is_hostile and not brain:is_hostile()) or anim and (anim.hands_tied or anim.tied) then
 			return true
 		end
 	end
@@ -151,6 +160,7 @@ if not loaded then
 		masks[#masks + 1] = self.shoot_enemies and "enemies" or nil
 		masks[#masks + 1] = self.shoot_civilians and "civilians" or nil
 		masks[#masks + 1] = self.shoot_turrets and "sentry_gun" or nil
+		masks[#masks + 1] = self.shoot_players and "criminals" or nil
 		return managers.slot:get_mask(unpack(masks))
 	end
 
