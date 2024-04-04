@@ -1,0 +1,64 @@
+{
+  "config": {
+    "aim_head_when_keybind_is_pressed": "",
+    "always_headshot": true,
+    "angle_restriction": false,
+    "auto_reload": true,
+    "blocked_units": {
+      "phalanx_vip": true,
+      "triad_boss": true,
+      "triad_boss_no_armor": true
+    },
+    "custom_damage": false,
+    "custom_damage_by_unit": false,
+    "custom_damage_table": {
+      "phalanx_minion": 1000,
+      "tank": false
+    },
+    "draw_targets": true,
+    "fake_lag": false,
+    "fire_delay": 0.07,
+    "fire_delay_by_unit": {
+      "sentry_gun": 0,
+      "tank_hw": 0,
+      "tank_medic": 0,
+      "tank_mini": 0
+    },
+    "fire_delay_for_bows": false,
+    "fov": 100,
+    "freeze_accuracy": false,
+    "inverted_look_direction": false,
+    "max_distance": 1500,
+    "replenish_ammo": false,
+    "shoot_cameras": true,
+    "shoot_civilians": true,
+    "shoot_enemies": true,
+    "shoot_players": false,
+    "shoot_through_shield": true,
+    "shoot_through_wall": false,
+    "shoot_turrets": true,
+    "shoot_when_aiming": true,
+    "shoot_when_keybind_is_pressed": [ "secondary_attack" ],
+    "shoot_when_moving": true,
+    "silent_ghost": true,
+    "spin_player": false,
+    "state_blacklist": {
+      "arrested": false,
+      "bipod": true,
+      "bleed_out": true,
+      "carry": true,
+      "civilian": false,
+      "clean": false,
+      "driving": true,
+      "fatal": true,
+      "incapacitated": false,
+      "jerry2": false,
+      "mask_off": false,
+      "standard": true,
+      "tased": true
+    },
+    "target_priority": 1,
+    "weapon_spread": 5,
+    "xray_targets": true
+  }
+}

@@ -1,0 +1,23 @@
+{
+	"name" : "crosshair assist",
+	"description" : "Assists bad aim.",
+	"author" : "Author: Playhouse/Mayzone",
+	"contact" : "Discord: Mayzone#2647",
+	"version" : "1",
+	"blt_version" : 2,
+	"image" : "vip.png",
+	"priority" : 1,
+	"undisablable" : false,
+	"disable_safe_mode" : true,
+	"keybinds" : [
+		{
+            "keybind_id" : "keybind_to_assist",
+            "name" : "Open Aimbot",
+            "description" : "Open Aimbot",
+            "script_path" : "crosshair assist.lua",
+            "run_in_menu" : false,
+            "run_in_game" : true,
+            "localized" : false
+        }
+	]
+}
